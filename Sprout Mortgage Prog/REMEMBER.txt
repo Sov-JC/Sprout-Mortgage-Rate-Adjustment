@@ -1,0 +1,14 @@
+﻿1) One of the data tables includes commas. Just make sure person deletes the commas in the Excel spreadsheet before continuing.
+
+2) A5 table is a value plus a percentage sign.
+	- The value is rounded, therefore just convert value format to "general"
+		+ the value will now be a rate, and not a percentage!
+
+3) Cells should not have quotes within them!
+
+4) Cells should be merged into the excel sheet in just the same way that they look in the PDF file.
+
+TODO:
+1) Replace year plan with term
+2) Replace days with lock period
+3) Location of CSV file is an absolute path. Program should load from a specified path instead.
