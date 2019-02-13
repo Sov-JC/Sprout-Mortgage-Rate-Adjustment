@@ -27,6 +27,13 @@ namespace Sprout_Mortgage_Prog
             YearFixed30 = 3, // 30 year fixed
         }
 
+        public enum Days
+        {
+            Day15 = 1,
+            Day30 = 2,
+            Day45 = 3,
+        }
+
         public const int A5_TABLE_ROWS  = 18;
         public const int A5_TABLE_COLS  = 12;
         public const int CSA_TABLE_ROWS = 12;
@@ -36,6 +43,23 @@ namespace Sprout_Mortgage_Prog
         public const int LLA_TABLE_ROWS = 11;
         public const int LLA_TABLE_COLS = 10;
 
+
+        //TODO: Rename DATA into ADJ_RATE
+        // location of the adjustment rates (the data)
+        // where 5/1, 7/1, and 30 year fixed start and end (inclusive)
+        public const int FIVE_ONE_ARM_DATA_COL_START = 1;
+        public const int FIVE_ONE_ARM_DATA_COL_END = 3;
+        public const int SEVEN_ONE_ARM_DATA_COL_START = 5;
+        public const int SEVEN_ONE_ARM_DATA_COL_END = 7;
+        public const int THIRTY_YEAR_FIXED_DATA_COL_START = 9;
+        public const int THIRTY_YEAR_FIXED_DATA_COL_END = 11;
+
+        //location of the base rates for the A5 table
+        //for 5/1 arm, 7/1 arm, and 30 year fixed.        
+        public const int FIVE_ONE_ARM_BASE_RATE_COL = 0;
+        public const int SEVEN_ONE_ARM_BASE_RATE_COL = 4;
+        public const int THIRTY_YEAR_BASE_RATE_COL = 8;
+                
         public const string A5_TABLE_NAME   = "A5 Table.csv";
         public const string CSA_TABLE_NAME  = "CSA Table.csv";
         public const string LA_TABLE_NAME   = "LA Table.csv";
@@ -46,7 +70,7 @@ namespace Sprout_Mortgage_Prog
         private static String[,] laTable = new String[LA_TABLE_ROWS,LA_TABLE_COLS];
         private static String[,] llaTable = new String[LLA_TABLE_ROWS,LLA_TABLE_COLS];
 
-        //not yet being used. Make use of them later
+        // not yet being used. Make use of them later
         private Boolean A5TableLoaded = false;
         private Boolean CSATableLoaded = false;
         private Boolean LATableLoaded = false;
@@ -401,15 +425,68 @@ namespace Sprout_Mortgage_Prog
             return cell;
         }
 
-        public static String getA5AdjustmentRate(string rate, Arm arm)
+        //TODO: Rename rate to Base Rate
+        //finds the adjustment rate of the A5 table for the corresponsing baserate,
+        //arm, and days.
+        public static String getA5AdjustmentRate(string rate, Arm arm, Days days)
         {
-            const int RATES_ROW_START = 2;//row where rates are displayed from top to bottom
-            for (int i=RATES_ROW_START; i<A5_TABLE_ROWS; i++)
-            {
-                
-            }    
+            pstrl("getA5AdjustmentRate() called");
+            const int RATES_ROW_START = 2;//row where base rates and rate adjustments are displayed from top to bottom
 
-            return "";
+            //the adj_rate_col is the one column that contains the adjustment rate. 
+            //The column that the adjustment rate lies in is dependent on the Arm 
+            //enum type, and the Days enum type. 
+            int adj_rate_col;
+
+            //the base_rate_col is the one column that contains the base rate that's dependent
+            //on the Arm enum type.
+            int base_rate_col;
+
+
+            //first set the adj_rate_col to where one of the ARM types adjustment rate column starts.
+            if (arm == Arm.Arm5)
+            {
+                base_rate_col = FIVE_ONE_ARM_BASE_RATE_COL;
+            }
+            else if (arm == Arm.Arm7)
+            {
+                base_rate_col = SEVEN_ONE_ARM_BASE_RATE_COL;
+            }
+            else {
+                base_rate_col = THIRTY_YEAR_BASE_RATE_COL;                
+            } 
+
+            //now that the adjustment rate col's base location is known, we just offset it depending on the Days
+            //enum type to find the column we want.
+            if (days == Days.Day15)
+                adj_rate_col = (base_rate_col + 1);
+            else if (days == Days.Day30)
+                adj_rate_col = base_rate_col + 2;
+            else if (days == Days.Day45)
+                adj_rate_col = base_rate_col + 3;
+            else
+                throw new Exception("Days enum type is invalid");
+
+            String adjustmentRate = null;
+            for (int i = RATES_ROW_START; i < A5_TABLE_ROWS; i++)
+                if (a5Table[i, base_rate_col] != rate)
+                {
+                    Console.WriteLine(String.Format("a5Table[{0}, {1}] != {2}", i, base_rate_col, rate));
+                    continue;
+                }
+                else
+                {
+                    Console.WriteLine("Adjustment rate found!");
+                    adjustmentRate = a5Table[i, adj_rate_col];
+                }
+
+            pstrl("[adj_rate_col:" + adj_rate_col.ToString() + ",base_rate_col:" + base_rate_col + "]");
+
+            //If no adjustment rate was found, then the input parameters to this function were incorrect.
+            if (adjustmentRate == null)            
+                throw new Exception("There exists no adjustment rate for the rate, ARM, and Days parameters");
+            else
+                return adjustmentRate;
         }
 
         

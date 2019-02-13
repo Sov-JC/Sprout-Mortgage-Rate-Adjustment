@@ -231,5 +231,24 @@ namespace Sprout_Mortgage_Prog
         {
 
         }
+
+        private void calculateButton_Click(object sender, EventArgs e)
+        {
+            testA5AdjustmentRateGenerator();
+        }
+        
+        //TODO: Delete this function in production        
+        private void testA5AdjustmentRateGenerator()
+        {
+            //String baseRate = this.baseRateComboBox.SelectedText; //no!
+            String baseRate = "0.0531";
+            Console.WriteLine("SelectedText is " + baseRate);
+            TableOperations.Arm arm = TableOperations.Arm.YearFixed30;
+            TableOperations.Days days = TableOperations.Days.Day45;
+
+            String adjustedRate = TableOperations.getA5AdjustmentRate(baseRate, arm, days);
+
+            Console.WriteLine("The adjusted rate is: " + adjustedRate);
+        }
     }
 }
