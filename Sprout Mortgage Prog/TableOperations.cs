@@ -489,10 +489,216 @@ namespace Sprout_Mortgage_Prog
                 return adjustmentRate;
         }
 
-        
+        public static string getCSAdjustmentRate(string creditScoreRange, string ltvRange)
+        {   
 
-        
-        
+            int row = getCsaCreditRangeRow(creditScoreRange);
+
+            int col = getCsaLtvRangeColumn(ltvRange);
+            Console.WriteLine("ltv range for csa was at col: " + col);
+
+            return csaTable[row, col];
+        }
+
+        public static string getLAAdjustmentRate(string loanAmount, string ltvRange) {
+            int row = getLALoanAmountRow(loanAmount);
+
+            int col = getLALtvRangeCol(string ltvRange);
+
+
+            return "";
+
+        }
+
+        private static int getLALtvRangeCol(string ltvRange)
+        {
+            const int LTV_RANGE_ROW = 0;//row where the ltv ranges are
+            const int LTV_RANGE_COL_START = 1; //column where ltv range first appear from left to right;
+            const Table TABLE = Table.LA;
+
+            return getLtvRangeColumn(ltvRange, LTV_RANGE_ROW, LTV_RANGE_COL_START, TABLE);
+        }
+
+        private static string getLALoanAmountRow(string loanAmount)
+        {
+
+
+
+            return "";
+        }
+
+        /**get the column that 'ltvRange' lies in. 
+         * 
+         * ltvRow - row where the ltv ranges are
+         * ltvColStart - column where the ltv ranges first appear from left to right
+         * table - Table you want to find the column for
+         * 
+         * NOTE: DOES NOT WORK FOR LLA table. This is because the table has too many exceptions!
+         */        
+        private static int getLtvRangeColumn(string ltvRange, int ltvRow, int ltvColStart, Table table)
+        {
+            int col_loc = -1; //column where ltv range is
+
+            int columns;//total columns in the table (used to loop through the table)
+            if (table == Table.A5)
+                columns = A5_TABLE_COLS;
+            else if (table == Table.CSA)            
+                columns = CSA_TABLE_COLS;
+            else if (table == Table.LA)
+                columns = LA_TABLE_COLS;
+            else if (table == Table.LLA)
+                throw new Exception("Invalid table input: getLtvRangeColumn does not suppose LLA table!");
+            else
+                throw new Exception("Invalid table input for call to getLtvRangeColumn()");
+
+            for (int col = ltvColStart; col<columns; col++)
+            {
+                if (table == Table.A5)
+                {
+                    if (a5Table[ltvRow, col] == ltvRange)
+                        col_loc = col;
+                }
+                else if (table == Table.CSA)
+                {
+                    if (csaTable[ltvRow, col] == ltvRange)
+                        col_loc = col;
+                }else if (table == Table.LA)
+                {
+                    if (csaTable[ltvRow, col] == ltvRange)
+                        col_loc = col;
+                }
+            }
+
+            if (col_loc == -1) //column_loc never changed -- the column was never found!
+                throw new Exception("couldn't find the column where " + ltvRange);
+
+            return col_loc;
+        }
+
+        //finds the column that the ltv range falls under
+        private static int getCsaLtvRangeColumn(string ltvRange)
+        {
+            const int LTV_RANGE_ROW = 3;//row where the ltv ranges are
+            const int LTV_RANGE_COL_START = 1;//column where ltv ranges first appear from left to right
+
+            int col_loc = -1; //column were ltv range is
+
+            //traverse table to find the column where 'ltvRange' is located
+            for (int col = LTV_RANGE_COL_START; col < CSA_TABLE_COLS; col++)
+            {
+                Console.Write("csaTable[LTV_RANGE_ROW, col]: " + csaTable[LTV_RANGE_ROW, col]);
+
+                if (ltvRange == csaTable[LTV_RANGE_ROW, col]) {
+                    Console.WriteLine(" == " + ltvRange);
+                    col_loc = col;
+                }
+                else
+                {
+                    Console.WriteLine(" != " + ltvRange);
+                }
+            }
+
+            Console.WriteLine();
+
+            if (col_loc== -1) //column_loc never changed -- the column was never found!
+                throw new Exception("couldn't find credit score adjustment ltv range column for ltv" + ltvRange);
+
+            return col_loc;
+        }
+
+        private static int getCsaCreditRangeRow(string creditScoreRange)
+        {
+            const int CS_RANGE_COL = 0; //column where credit score range lies
+            const int CS_RANGE_ROW_START = 4; //column where credit score range first appears from top to bottom
+
+            int row_loc = -1; //row where credit score range is
+
+            //traverse table to find the row were credit score is located
+            for (int row = CS_RANGE_ROW_START; row < CSA_TABLE_ROWS; row++)
+                if (creditScoreRange == csaTable[row, CS_RANGE_COL])
+                    row_loc = row;
+
+            if (row_loc == -1) //column never changed -- column never found!
+                throw new Exception("tried to find row where '" + creditScoreRange + "' exists but couldn't find it.");
+
+            return row_loc;
+        }
+
+        //returns the first instance location of 'searchStr' in array 'str' from
+        //'start' index to 'end' index (inclusive) 
+        private static int strInArray(string[] str, int start, int end, string searchStr)
+        {
+            if (start < 0 || end > str.Length || (end > start))
+                return -1;
+
+            for (int i = start; i <= end; i++)
+                    if (str[i] == searchStr)
+                        return i;
+
+            return -1;
+        }
+
+        private static String[] tableRowToStrArr(String[][] table, int row)
+        {            
+            String[] str = new string[table.GetLength(1)];
+            table[row].CopyTo(str, 0);
+            return str;
+        }
+
+        private static String[] tableColToStrArr(String[,] table, int col)
+        {           
+            if (col < 0 || col > table.GetLength(1))
+                return null;
+            
+            List<String> strArr = new List<String>();
+
+            for(int i=0; i<table.Length; i++)
+            {
+                strArr.Add(new String(table[i,col].ToCharArray()));
+            }
+
+            String[] returnArray = strArr.ToArray();
+            Console.WriteLine("tableColToStrArray called on col of [length:" + table.GetLength(1) + "], the ToArray() is length: " + returnArray.Length);
+
+            return returnArray;            
+        }
+
+        //finds a FIRST instance of a string in the row 'row' starting from 'colStart' up to 'colEnd' in 2-d array 'array'
+        //returns -1 if not found or out of bounds
+        //          returns the location of 'str' in the row otherwise.
+        private static int strInRow(int row, string str, int colStart, int colEnd, string[,] table)
+        {
+            bool found = false;
+
+            if (colEnd < colStart || row < 0 || colStart < 0)
+                return -1;
+
+            /*
+            //make sure we don't clip out of bounds
+            if (table == Table.A5 && (colEnd > A5_TABLE_COLS))
+                return false;
+            else if (table == Table.CSA && (colEnd > CSA_TABLE_COLS))
+                return false;
+            else if (table == Table.LA && (colEnd > LA_TABLE_COLS))
+                return false;
+            else if (table == Table.LLA && (colEnd > LLA_TABLE_COLS))
+                return false;
+                */
+                
+            int col_loc = -1;
+
+            try {
+                for (int col = colStart; col <= colEnd; col++)
+                    if (table[row, col] == str)
+                        return col_loc;
+            } catch (Exception e) { 
+                return -1;
+            }
+
+            return col_loc;
+
+         }
+
 
         private static void pstr(Object o)
         {            
